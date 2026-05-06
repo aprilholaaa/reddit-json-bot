@@ -37,18 +37,13 @@ app.post("/convert", async (req, res) => {
       });
     }
 
-    // Resolve short Reddit links
+    // Resolve short links
     if (
       link.includes("redd.it") ||
       link.includes("/s/")
     ) {
 
-      const response = await fetch(link, {
-        redirect: "follow",
-        headers: {
-          "User-Agent": "Mozilla/5.0"
-        }
-      });
+      const response = await fetch(link);
 
       link = response.url;
     }
@@ -78,7 +73,7 @@ app.post("/convert", async (req, res) => {
   }
 });
 
-// Discord Bot Message Listener
+// Discord Bot
 client.on("messageCreate", async (message) => {
 
   if (message.author.bot) return;
@@ -105,12 +100,7 @@ client.on("messageCreate", async (message) => {
         link.includes("/s/")
       ) {
 
-        const response = await fetch(link, {
-          redirect: "follow",
-          headers: {
-            "User-Agent": "Mozilla/5.0"
-          }
-        });
+        const response = await fetch(link);
 
         finalUrl = response.url;
       }

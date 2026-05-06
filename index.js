@@ -19,11 +19,12 @@ client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
+// Home Route
 app.get("/", (req, res) => {
   res.send("Reddit JSON API Running");
 });
 
-// CONVERT API
+// Convert Route
 app.post("/convert", async (req, res) => {
 
   try {
@@ -36,7 +37,7 @@ app.post("/convert", async (req, res) => {
       });
     }
 
-    // resolve short links
+    // Resolve short Reddit links
     if (
       link.includes("redd.it") ||
       link.includes("/s/")
@@ -52,14 +53,15 @@ app.post("/convert", async (req, res) => {
       link = response.url;
     }
 
-    // clean URL
+    // Remove query params
     link = link.split("?")[0];
 
+    // Remove ending slash
     if (link.endsWith("/")) {
       link = link.slice(0, -1);
     }
 
-    // add .json
+    // Add .json
     const jsonUrl = link + ".json";
 
     return res.json({
@@ -73,6 +75,66 @@ app.post("/convert", async (req, res) => {
     return res.status(500).json({
       error: "Conversion failed"
     });
+  }
+});
+
+// Discord Bot Message Listener
+client.on("messageCreate", async (message) => {
+
+  if (message.author.bot) return;
+
+  const regex = /(https?:\/\/[^\s]+)/gi;
+
+  const matches = message.content.match(regex);
+
+  if (!matches) return;
+
+  for (const link of matches) {
+
+    if (
+      !link.includes("reddit.com") &&
+      !link.includes("redd.it")
+    ) continue;
+
+    try {
+
+      let finalUrl = link;
+
+      if (
+        link.includes("redd.it") ||
+        link.includes("/s/")
+      ) {
+
+        const response = await fetch(link, {
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0"
+          }
+        });
+
+        finalUrl = response.url;
+      }
+
+      finalUrl = finalUrl.split("?")[0];
+
+      if (finalUrl.endsWith("/")) {
+        finalUrl = finalUrl.slice(0, -1);
+      }
+
+      const jsonUrl = finalUrl + ".json";
+
+      await message.reply(
+        `✅ JSON URL:\n${jsonUrl}`
+      );
+
+    } catch(err) {
+
+      console.error(err);
+
+      await message.reply(
+        "❌ Failed to process link"
+      );
+    }
   }
 });
 

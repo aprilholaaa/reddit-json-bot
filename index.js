@@ -14,10 +14,9 @@ client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-async function resolveUrl(url) {
+async function expandRedditUrl(url) {
 
   const response = await fetch(url, {
-    method: "GET",
     redirect: "follow",
     headers: {
       "User-Agent": "Mozilla/5.0"
@@ -48,23 +47,24 @@ client.on("messageCreate", async (message) => {
 
       let finalUrl = link;
 
-      // resolve short/share URLs
+      // FIRST expand short/share URLs
       if (
         link.includes("redd.it") ||
         link.includes("/s/")
       ) {
 
-        finalUrl = await resolveUrl(link);
+        finalUrl = await expandRedditUrl(link);
       }
 
       // remove query params
       finalUrl = finalUrl.split("?")[0];
 
-      // remove trailing slash
+      // remove ending slash
       if (finalUrl.endsWith("/")) {
         finalUrl = finalUrl.slice(0, -1);
       }
 
+      // ONLY NOW add .json
       const jsonUrl = finalUrl + ".json";
 
       await message.reply(

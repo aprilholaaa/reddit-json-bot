@@ -40,12 +40,17 @@ client.on("messageCreate", async (message) => {
       if (link.includes("redd.it")) {
 
         const response = await fetch(link, {
-          method: "GET",
-          redirect: "follow"
-        });
+  method: "GET",
+  redirect: "manual"
+});
 
-        finalUrl = response.url;
-      }
+const redirected = response.headers.get("location");
+
+if (redirected) {
+  finalUrl = redirected.startsWith("http")
+    ? redirected
+    : `https://reddit.com${redirected}`;
+}
 
       finalUrl = finalUrl.split("?")[0];
 

@@ -17,18 +17,28 @@ client.once("ready", () => {
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  const redditRegex = /(https?:\/\/(www\.)?(reddit\.com|redd\.it)\/\S+)/gi;
+  const text = message.content;
 
-  const matches = message.content.match(redditRegex);
+  // detect reddit links
+  const regex = /(https?:\/\/(www\.)?(reddit\.com|redd\.it)\/\S+)/gi;
+
+  const matches = text.match(regex);
 
   if (!matches) return;
 
-  for (const url of matches) {
+  for (const link of matches) {
     try {
-      const cleanUrl = url.replace(/\/$/, "");
-      const jsonUrl = cleanUrl + ".json";
+
+      let clean = link.split("?")[0];
+
+      if (clean.endsWith("/")) {
+        clean = clean.slice(0, -1);
+      }
+
+      const jsonUrl = clean + ".json";
 
       await message.reply(`✅ JSON URL:\n${jsonUrl}`);
+
     } catch (err) {
       console.error(err);
       await message.reply("❌ Failed to process link");

@@ -37,21 +37,28 @@ client.on("messageCreate", async (message) => {
 
       let finalUrl = link;
 
-      // resolve short links
+      // Handle short Reddit links
       if (
         link.includes("redd.it") ||
         link.includes("/s/")
       ) {
 
         const response = await fetch(link, {
-          method: "GET",
-          redirect: "follow",
+          method: "HEAD",
+          redirect: "manual",
           headers: {
             "User-Agent": "Mozilla/5.0"
           }
         });
 
-        finalUrl = response.url;
+        const redirectedUrl = response.headers.get("location");
+
+        if (redirectedUrl) {
+
+          finalUrl = redirectedUrl.startsWith("http")
+            ? redirectedUrl
+            : `https://www.reddit.com${redirectedUrl}`;
+        }
       }
 
       finalUrl = finalUrl.split("?")[0];

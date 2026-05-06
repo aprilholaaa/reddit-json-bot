@@ -14,12 +14,14 @@ client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-async function expandRedditUrl(url) {
+async function resolveFinalRedditUrl(shortUrl) {
 
-  const response = await fetch(url, {
+  const response = await fetch(shortUrl, {
+    method: "GET",
     redirect: "follow",
     headers: {
-      "User-Agent": "Mozilla/5.0"
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     }
   });
 
@@ -47,24 +49,23 @@ client.on("messageCreate", async (message) => {
 
       let finalUrl = link;
 
-      // FIRST expand short/share URLs
+      // STEP 1 — expand short/share URL
       if (
-        link.includes("redd.it") ||
-        link.includes("/s/")
+        link.includes("/s/") ||
+        link.includes("redd.it")
       ) {
 
-        finalUrl = await expandRedditUrl(link);
+        finalUrl = await resolveFinalRedditUrl(link);
       }
 
-      // remove query params
+      // STEP 2 — clean URL
       finalUrl = finalUrl.split("?")[0];
 
-      // remove ending slash
       if (finalUrl.endsWith("/")) {
         finalUrl = finalUrl.slice(0, -1);
       }
 
-      // ONLY NOW add .json
+      // STEP 3 — only now append .json
       const jsonUrl = finalUrl + ".json";
 
       await message.reply(

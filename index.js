@@ -14,15 +14,39 @@ client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
+async function resolveRedditUrl(url) {
+
+  // redd.it short links
+  if (url.includes("redd.it")) {
+
+    const postId = url.split("/").pop();
+
+    return `https://www.reddit.com/comments/${postId}/`;
+  }
+
+  // /s/ share links
+  if (url.includes("/s/")) {
+
+    const response = await fetch(url, {
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Mozilla/5.0"
+      }
+    });
+
+    return response.url;
+  }
+
+  return url;
+}
+
 client.on("messageCreate", async (message) => {
 
   if (message.author.bot) return;
 
-  const text = message.content;
-
   const regex = /(https?:\/\/[^\s]+)/gi;
 
-  const matches = text.match(regex);
+  const matches = message.content.match(regex);
 
   if (!matches) return;
 
@@ -35,31 +59,7 @@ client.on("messageCreate", async (message) => {
 
     try {
 
-      let finalUrl = link;
-
-      // Handle short Reddit links
-      if (
-        link.includes("redd.it") ||
-        link.includes("/s/")
-      ) {
-
-        const response = await fetch(link, {
-          method: "HEAD",
-          redirect: "manual",
-          headers: {
-            "User-Agent": "Mozilla/5.0"
-          }
-        });
-
-        const redirectedUrl = response.headers.get("location");
-
-        if (redirectedUrl) {
-
-          finalUrl = redirectedUrl.startsWith("http")
-            ? redirectedUrl
-            : `https://www.reddit.com${redirectedUrl}`;
-        }
-      }
+      let finalUrl = await resolveRedditUrl(link);
 
       finalUrl = finalUrl.split("?")[0];
 
@@ -69,11 +69,17 @@ client.on("messageCreate", async (message) => {
 
       const jsonUrl = finalUrl + ".json";
 
-      await message.reply(`✅ JSON URL:\n${jsonUrl}`);
+      await message.reply(
+        `✅ JSON URL:\n${jsonUrl}`
+      );
 
     } catch (err) {
+
       console.error(err);
-      await message.reply("❌ Failed to process link");
+
+      await message.reply(
+        "❌ Failed to process link"
+      );
     }
   }
 });

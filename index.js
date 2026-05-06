@@ -15,46 +15,25 @@ client.once("ready", () => {
 });
 
 client.on("messageCreate", async (message) => {
-
   if (message.author.bot) return;
 
-  const text = message.content;
+  const redditRegex = /(https?:\/\/(www\.)?(reddit\.com|redd\.it)\/\S+)/gi;
 
-  const redditRegex = /(https?:\/\/(?:www\.)?(?:redd\.it|reddit\.com)\/\S+)/gi;
-
-  const matches = text.match(redditRegex);
+  const matches = message.content.match(redditRegex);
 
   if (!matches) return;
 
   for (const url of matches) {
-
     try {
-
-      const response = await fetch(url, {
-        redirect: "follow",
-        headers: {
-          "User-Agent": "Mozilla/5.0"
-        }
-      });
-
-      let finalUrl = response.url;
-
-      finalUrl = finalUrl.replace(/\/$/, "");
-
-      const jsonUrl = finalUrl + ".json";
+      const cleanUrl = url.replace(/\/$/, "");
+      const jsonUrl = cleanUrl + ".json";
 
       await message.reply(`✅ JSON URL:\n${jsonUrl}`);
-
     } catch (err) {
-
       console.error(err);
-
-      await message.reply(`❌ Failed to process link`);
-
+      await message.reply("❌ Failed to process link");
     }
-
   }
-
 });
 
 client.login(process.env.TOKEN);

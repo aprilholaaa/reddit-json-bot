@@ -1,6 +1,12 @@
 require("dotenv").config();
 
+const express = require("express");
+
 const { Client, GatewayIntentBits } = require("discord.js");
+
+const app = express();
+
+app.use(express.json());
 
 const client = new Client({
   intents: [
@@ -12,6 +18,10 @@ const client = new Client({
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
+});
+
+app.get("/", (req, res) => {
+  res.send("Reddit JSON API Running");
 });
 
 async function resolveFinalRedditUrl(shortUrl) {
@@ -49,7 +59,7 @@ client.on("messageCreate", async (message) => {
 
       let finalUrl = link;
 
-      // STEP 1 — expand short/share URL
+      // expand short/share links
       if (
         link.includes("/s/") ||
         link.includes("redd.it")
@@ -58,14 +68,12 @@ client.on("messageCreate", async (message) => {
         finalUrl = await resolveFinalRedditUrl(link);
       }
 
-      // STEP 2 — clean URL
       finalUrl = finalUrl.split("?")[0];
 
       if (finalUrl.endsWith("/")) {
         finalUrl = finalUrl.slice(0, -1);
       }
 
-      // STEP 3 — only now append .json
       const jsonUrl = finalUrl + ".json";
 
       await message.reply(
@@ -81,6 +89,10 @@ client.on("messageCreate", async (message) => {
       );
     }
   }
+});
+
+app.listen(3000, () => {
+  console.log("API Server Running");
 });
 
 client.login(process.env.TOKEN);

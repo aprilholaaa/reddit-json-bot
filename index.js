@@ -14,30 +14,17 @@ client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-async function resolveRedditUrl(url) {
+async function resolveUrl(url) {
 
-  // redd.it short links
-  if (url.includes("redd.it")) {
+  const response = await fetch(url, {
+    method: "GET",
+    redirect: "follow",
+    headers: {
+      "User-Agent": "Mozilla/5.0"
+    }
+  });
 
-    const postId = url.split("/").pop();
-
-    return `https://www.reddit.com/comments/${postId}/`;
-  }
-
-  // /s/ share links
-  if (url.includes("/s/")) {
-
-    const response = await fetch(url, {
-      redirect: "follow",
-      headers: {
-        "User-Agent": "Mozilla/5.0"
-      }
-    });
-
-    return response.url;
-  }
-
-  return url;
+  return response.url;
 }
 
 client.on("messageCreate", async (message) => {
@@ -59,10 +46,21 @@ client.on("messageCreate", async (message) => {
 
     try {
 
-      let finalUrl = await resolveRedditUrl(link);
+      let finalUrl = link;
 
+      // resolve short/share URLs
+      if (
+        link.includes("redd.it") ||
+        link.includes("/s/")
+      ) {
+
+        finalUrl = await resolveUrl(link);
+      }
+
+      // remove query params
       finalUrl = finalUrl.split("?")[0];
 
+      // remove trailing slash
       if (finalUrl.endsWith("/")) {
         finalUrl = finalUrl.slice(0, -1);
       }

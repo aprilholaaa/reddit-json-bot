@@ -27,10 +27,27 @@ client.on("messageCreate", async (message) => {
 
   for (const link of matches) {
 
-    if (
-      !link.includes("reddit.com") &&
-      !link.includes("redd.it")
-    ) continue;
+   // resolve short links
+if (
+  link.includes("redd.it") ||
+  link.includes("/s/")
+) {
+
+  const response = await fetch(link, {
+    method: "GET",
+    redirect: "follow",
+    headers: {
+      "User-Agent": "Mozilla/5.0"
+    }
+  });
+
+  finalUrl = response.url;
+  
+} finalUrl = finalUrl.split("?")[0];
+
+if (finalUrl.endsWith("/")) {
+  finalUrl = finalUrl.slice(0, -1);
+} continue;
 
     try {
 

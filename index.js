@@ -19,23 +19,41 @@ client.on("messageCreate", async (message) => {
 
   const text = message.content;
 
-  // detect reddit links
-  const regex = /(https?:\/\/(www\.)?(reddit\.com|redd\.it)\/\S+)/gi;
+  const regex = /(https?:\/\/[^\s]+)/gi;
 
   const matches = text.match(regex);
 
   if (!matches) return;
 
   for (const link of matches) {
+
+    if (
+      !link.includes("reddit.com") &&
+      !link.includes("redd.it")
+    ) continue;
+
     try {
 
-      let clean = link.split("?")[0];
+      let finalUrl = link;
 
-      if (clean.endsWith("/")) {
-        clean = clean.slice(0, -1);
+      // resolve redd.it short links
+      if (link.includes("redd.it")) {
+
+        const response = await fetch(link, {
+          method: "GET",
+          redirect: "follow"
+        });
+
+        finalUrl = response.url;
       }
 
-      const jsonUrl = clean + ".json";
+      finalUrl = finalUrl.split("?")[0];
+
+      if (finalUrl.endsWith("/")) {
+        finalUrl = finalUrl.slice(0, -1);
+      }
+
+      const jsonUrl = finalUrl + ".json";
 
       await message.reply(`✅ JSON URL:\n${jsonUrl}`);
 

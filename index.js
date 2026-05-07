@@ -18,13 +18,16 @@ app.get("/convert", async (req, res) => {
       });
     }
 
-    // resolve short Reddit links
+    // resolve short links
     if (
-      link.includes("redd.it") ||
-      link.includes("/s/")
+      link.includes("/s/") ||
+      link.includes("redd.it")
     ) {
 
-      const response = await fetch(link);
+      const response = await fetch(link, {
+        method: "GET",
+        redirect: "follow"
+      });
 
       link = response.url;
     }
@@ -37,7 +40,7 @@ app.get("/convert", async (req, res) => {
       link = link.slice(0, -1);
     }
 
-    // add .json
+    // convert to json
     const jsonUrl = link + ".json";
 
     return res.json({

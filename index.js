@@ -6,7 +6,7 @@ app.get("/", (req, res) => {
   res.send("Reddit JSON API Running");
 });
 
-app.get("/convert", (req, res) => {
+app.get("/convert", async (req, res) => {
 
   try {
 
@@ -18,6 +18,17 @@ app.get("/convert", (req, res) => {
       });
     }
 
+    // resolve short Reddit links
+    if (
+      link.includes("redd.it") ||
+      link.includes("/s/")
+    ) {
+
+      const response = await fetch(link);
+
+      link = response.url;
+    }
+
     // remove query params
     link = link.split("?")[0];
 
@@ -26,6 +37,7 @@ app.get("/convert", (req, res) => {
       link = link.slice(0, -1);
     }
 
+    // add .json
     const jsonUrl = link + ".json";
 
     return res.json({

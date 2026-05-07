@@ -1,33 +1,48 @@
-function onEdit(e) {
+const express = require("express");
 
-  const sheet = e.source.getActiveSheet();
+const app = express();
 
-  const row = e.range.getRow();
-  const col = e.range.getColumn();
+app.get("/", (req, res) => {
+  res.send("API Running");
+});
 
-  if (col !== 4) return;
-
-  const redditLink = sheet.getRange(row, 4).getValue();
-
-  if (!redditLink) return;
+app.get("/convert", async (req, res) => {
 
   try {
 
-    const apiUrl =
-      "https://exciting-nourishment-production-2133.up.railway.app/convert?link="
-      + encodeURIComponent(redditLink);
+    let link = req.query.link;
 
-    const response = UrlFetchApp.fetch(apiUrl);
+    if (!link) {
+      return res.status(400).json({
+        error: "No link provided"
+      });
+    }
 
-    const data = JSON.parse(response.getContentText());
+    // remove query params
+    link = link.split("?")[0];
 
-    sheet.getRange(row, 5).setValue(data.jsonUrl);
+    // remove ending slash
+    if (link.endsWith("/")) {
+      link = link.slice(0, -1);
+    }
 
-    sheet.getRange(row, 6).setValue("DONE");
+    // add .json
+    const jsonUrl = link + ".json";
+
+    return res.json({
+      jsonUrl
+    });
 
   } catch(err) {
 
-    sheet.getRange(row, 6).setValue(err.toString());
-
+    return res.status(500).json({
+      error: err.message
+    });
   }
-}
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
+});

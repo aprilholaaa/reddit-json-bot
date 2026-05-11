@@ -79,7 +79,7 @@ app.get("/check", async (req, res) => {
       }
     });
 
-    // if reddit blocks json but oembed works
+    // json blocked
     if (jsonResponse.status !== 200) {
 
       return res.json({
@@ -108,18 +108,36 @@ app.get("/check", async (req, res) => {
     const post =
       data[0].data.children[0].data;
 
-    // REMOVED / FILTERED / DELETED
+    // STRICT REMOVAL CHECKS
     if (
       post.removed_by_category ||
       post.removed ||
       post.banned_by ||
       post.author === "[deleted]" ||
-      post.selftext === "[deleted]"
+      post.selftext === "[deleted]" ||
+      post.title === "[removed by reddit]" ||
+      post.removal_reason ||
+      post.mod_reason_by
     ) {
 
       return res.json({
         status: "ERROR",
         reason: "REMOVED_OR_DELETED"
+      });
+    }
+
+    // BODY REMOVED CHECK
+    if (
+      typeof post.selftext === "string" &&
+      (
+        post.selftext.includes("[removed]") ||
+        post.selftext.includes("removed by reddit")
+      )
+    ) {
+
+      return res.json({
+        status: "ERROR",
+        reason: "FILTER_REMOVED"
       });
     }
 

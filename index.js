@@ -42,7 +42,7 @@ app.get("/check", async (req, res) => {
       link = link.slice(0, -1);
     }
 
-    // use oembed instead of json
+    // oembed endpoint
     const apiUrl =
       "https://www.reddit.com/oembed?url="
       + encodeURIComponent(link);
@@ -57,13 +57,23 @@ app.get("/check", async (req, res) => {
       });
     }
 
-    // DELETED
+    // DELETED / REMOVED
     if (
-      response.status === 404
+      response.status === 404 ||
+      response.status === 403
     ) {
 
       return res.json({
         status: "DELETED"
+      });
+    }
+
+    // RATE LIMIT
+    if (response.status === 429) {
+
+      return res.json({
+        status: "ERROR",
+        reason: "RATE_LIMIT"
       });
     }
 

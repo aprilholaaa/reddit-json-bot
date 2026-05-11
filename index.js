@@ -18,8 +18,7 @@ app.get("/check", async (req, res) => {
     if (!link) {
 
       return res.json({
-        status: "ERROR",
-        reason: "NO_LINK"
+        status: "INVALID"
       });
     }
 
@@ -58,15 +57,14 @@ app.get("/check", async (req, res) => {
       }
     });
 
-    // obvious dead
+    // unavailable/private
     if (
       oembedResponse.status === 404 ||
       oembedResponse.status === 403
     ) {
 
       return res.json({
-        status: "ERROR",
-        reason: "POST_UNAVAILABLE"
+        status: "INVALID"
       });
     }
 
@@ -79,12 +77,11 @@ app.get("/check", async (req, res) => {
       }
     });
 
-    // json blocked
+    // fallback
     if (jsonResponse.status !== 200) {
 
       return res.json({
-        status: "LIVE",
-        reason: "OEMBED_ONLY"
+        status: "LIVE"
       });
     }
 
@@ -100,33 +97,50 @@ app.get("/check", async (req, res) => {
     ) {
 
       return res.json({
-        status: "ERROR",
-        reason: "INVALID_POST"
+        status: "INVALID"
       });
     }
 
     const post =
       data[0].data.children[0].data;
 
-    // STRICT REMOVAL CHECKS
+    // USER DELETED
     if (
-      post.removed_by_category ||
-      post.removed ||
-      post.banned_by ||
       post.author === "[deleted]" ||
-      post.selftext === "[deleted]" ||
-      post.title === "[removed by reddit]" ||
+      post.selftext === "[deleted]"
+    ) {
+
+      return res.json({
+        status: "USER_DELETED"
+      });
+    }
+
+    // MOD REMOVED
+    if (
+      post.removed_by_category === "moderator"
+    ) {
+
+      return res.json({
+        status: "MOD_REMOVED"
+      });
+    }
+
+    // REDDIT FILTER
+    if (
+      post.removed_by_category === "reddit" ||
+      post.removed_by_category === "automod_filtered" ||
+      post.banned_by ||
+      post.removed ||
       post.removal_reason ||
       post.mod_reason_by
     ) {
 
       return res.json({
-        status: "ERROR",
-        reason: "REMOVED_OR_DELETED"
+        status: "REDDIT_FILTER"
       });
     }
 
-    // BODY REMOVED CHECK
+    // FILTER BODY DETECTION
     if (
       typeof post.selftext === "string" &&
       (
@@ -136,22 +150,19 @@ app.get("/check", async (req, res) => {
     ) {
 
       return res.json({
-        status: "ERROR",
-        reason: "FILTER_REMOVED"
+        status: "REDDIT_FILTER"
       });
     }
 
     // LIVE
     return res.json({
-      status: "LIVE",
-      reason: "POST_EXISTS"
+      status: "LIVE"
     });
 
   } catch(err) {
 
     return res.json({
-      status: "ERROR",
-      reason: err.message
+      status: "INVALID"
     });
   }
 });

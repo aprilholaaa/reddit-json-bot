@@ -27,7 +27,11 @@ app.get("/convert", async (req, res) => {
 
       const response = await fetch(link, {
         method: "GET",
-        redirect: "follow"
+        redirect: "follow",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
+        }
       });
 
       link = response.url;
@@ -80,7 +84,8 @@ app.get("/check", async (req, res) => {
         method: "GET",
         redirect: "follow",
         headers: {
-          "User-Agent": "Mozilla/5.0 RedditCheckerBot"
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
         }
       });
 
@@ -100,7 +105,8 @@ app.get("/check", async (req, res) => {
     // fetch reddit json
     const redditResponse = await fetch(jsonUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 RedditCheckerBot"
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
       }
     });
 

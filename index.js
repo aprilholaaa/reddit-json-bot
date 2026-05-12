@@ -60,7 +60,6 @@ app.get("/check", async (req, res) => {
       }
     });
 
-    // unavailable/private
     if (
       oembedResponse.status === 404 ||
       oembedResponse.status === 403
@@ -71,7 +70,6 @@ app.get("/check", async (req, res) => {
       });
     }
 
-    // JSON CHECK
     const jsonUrl = link + ".json";
 
     const jsonResponse = await fetch(jsonUrl, {
@@ -80,7 +78,6 @@ app.get("/check", async (req, res) => {
       }
     });
 
-    // fallback
     if (jsonResponse.status !== 200) {
 
       return res.json({
@@ -90,7 +87,6 @@ app.get("/check", async (req, res) => {
 
     const data = await jsonResponse.json();
 
-    // invalid payload
     if (
       !Array.isArray(data) ||
       !data[0] ||
@@ -107,7 +103,6 @@ app.get("/check", async (req, res) => {
     const post =
       data[0].data.children[0].data;
 
-    // USER DELETED
     if (
       post.author === "[deleted]" ||
       post.selftext === "[deleted]"
@@ -118,7 +113,6 @@ app.get("/check", async (req, res) => {
       });
     }
 
-    // MOD REMOVED
     if (
       post.removed_by_category === "moderator"
     ) {
@@ -128,7 +122,6 @@ app.get("/check", async (req, res) => {
       });
     }
 
-    // REDDIT FILTER
     if (
       post.removed_by_category === "reddit" ||
       post.removed_by_category === "automod_filtered" ||
@@ -143,7 +136,6 @@ app.get("/check", async (req, res) => {
       });
     }
 
-    // FILTER BODY DETECTION
     if (
       typeof post.selftext === "string" &&
       (
@@ -157,7 +149,6 @@ app.get("/check", async (req, res) => {
       });
     }
 
-    // LIVE
     return res.json({
       status: "LIVE"
     });
@@ -169,6 +160,49 @@ app.get("/check", async (req, res) => {
     });
   }
 });
+
+
+
+// RECURSIVE COMMENT FINDER
+function findComment(comments, commentId) {
+
+  for (const item of comments) {
+
+    if (
+      item.kind === "t1" &&
+      item.data
+    ) {
+
+      // FOUND COMMENT
+      if (
+        item.data.id === commentId
+      ) {
+
+        return item.data;
+      }
+
+      // SEARCH REPLIES
+      if (
+        item.data.replies &&
+        item.data.replies.data &&
+        item.data.replies.data.children
+      ) {
+
+        const found =
+          findComment(
+            item.data.replies.data.children,
+            commentId
+          );
+
+        if (found) {
+          return found;
+        }
+      }
+    }
+  }
+
+  return null;
+}
 
 
 
@@ -221,7 +255,6 @@ app.get("/comment-check", async (req, res) => {
         parts[i] === "comments"
       ) {
 
-        // format:
         // /comments/postid/comment/commentid/
 
         if (
@@ -233,7 +266,6 @@ app.get("/comment-check", async (req, res) => {
           break;
         }
 
-        // fallback:
         // /comments/postid/title/commentid/
 
         if (
@@ -271,7 +303,6 @@ app.get("/comment-check", async (req, res) => {
 
     const data = await response.json();
 
-    // comments listing
     if (
       !data[1] ||
       !data[1].data ||
@@ -283,25 +314,13 @@ app.get("/comment-check", async (req, res) => {
       });
     }
 
-    const comments =
-      data[1].data.children;
+    // RECURSIVE SEARCH
+    const foundComment =
+      findComment(
+        data[1].data.children,
+        commentId
+      );
 
-    let foundComment = null;
-
-    for (const item of comments) {
-
-      if (
-        item.kind === "t1" &&
-        item.data &&
-        item.data.id === commentId
-      ) {
-
-        foundComment = item.data;
-        break;
-      }
-    }
-
-    // comment missing
     if (!foundComment) {
 
       return res.json({

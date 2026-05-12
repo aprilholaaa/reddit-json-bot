@@ -9,6 +9,9 @@ app.get("/", (req, res) => {
   res.send("Reddit Status API Running");
 });
 
+
+
+// POST CHECK
 app.get("/check", async (req, res) => {
 
   try {
@@ -166,6 +169,9 @@ app.get("/check", async (req, res) => {
     });
   }
 });
+
+
+
 // COMMENT CHECK
 app.get("/comment-check", async (req, res) => {
 
@@ -212,12 +218,31 @@ app.get("/comment-check", async (req, res) => {
     for (let i = 0; i < parts.length; i++) {
 
       if (
-        parts[i] === "comments" &&
-        parts[i + 4]
+        parts[i] === "comments"
       ) {
 
-        commentId = parts[i + 4];
-        break;
+        // format:
+        // /comments/postid/comment/commentid/
+
+        if (
+          parts[i + 2] === "comment" &&
+          parts[i + 3]
+        ) {
+
+          commentId = parts[i + 3];
+          break;
+        }
+
+        // fallback:
+        // /comments/postid/title/commentid/
+
+        if (
+          parts[i + 4]
+        ) {
+
+          commentId = parts[i + 4];
+          break;
+        }
       }
     }
 
@@ -317,6 +342,9 @@ app.get("/comment-check", async (req, res) => {
     });
   }
 });
+
+
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
